@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Калькулятор мероприятий</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d6dbe3;
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --accent: #b45309;
+      --danger: #b42318;
+      --ok: #047857;
+      --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+      --right-panel-width: 340px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .compat-warning {
+      display: none;
+      margin: 16px;
+      padding: 14px 16px;
+      border: 1px solid #fedf89;
+      border-radius: 8px;
+      background: #fffaeb;
+      color: #7a4b00;
+      font: 16px/1.45 "Segoe UI", Arial, sans-serif;
+    }
+
+    main {
+      width: calc(100% - 32px);
+      margin: 24px auto 40px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--right-panel-width);
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .support-line {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .support-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .support-link:hover {
+      border-color: rgba(15, 118, 110, 0.35);
+      background: #eef7f6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--right-panel-width);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      width: var(--right-panel-width);
+      justify-content: flex-end;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .button-like {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    button:hover,
+    .button-like:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    button.secondary,
+    .button-like.secondary {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    button.secondary:hover,
+    .button-like.secondary:hover {
+      background: #eef7f6;
+    }
+
+    button.danger {
+      border-color: #f2c8c4;
+      background: #fff;
+      color: var(--danger);
+    }
+
+    button.danger:hover {
+      background: #fff4f2;
+      border-color: #e6a6a0;
+    }
+
+    .people-panel {
+      width: 100%;
+      overflow: auto;
+    }
+
+    .bulk-panel {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .bulk-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .bulk-label {
+      color: #344054;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1040px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f2f4f7;
+      color: #344054;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    td.money,
+    th.money {
+      text-align: right;
+    }
+
+    .number-cell {
+      width: 52px;
+      min-width: 52px;
+      text-align: right;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .person-toggle {
+      display: none;
+    }
+
+    .person-toggle-cell {
+      display: none;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid #c8d0dc;
+      border-radius: 6px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.25);
+      border-color: var(--primary);
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .check-cell {
+      text-align: center;
+    }
+
+    .spent-input {
+      min-width: 128px;
+      text-align: right;
+    }
+
+    .person-name {
+      min-width: 140px;
+    }
+
+    .balance {
+      font-weight: 750;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .balance.positive {
+      color: var(--ok);
+    }
+
+    .balance.negative {
+      color: var(--danger);
+    }
+
+    .summary {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      position: sticky;
+      top: 16px;
+      width: var(--right-panel-width);
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      z-index: 5;
+    }
+
+    .summary-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--line);
+    }
+
+    .metric {
+      min-height: 86px;
+      padding: 13px;
+      background: #fff;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .settlements {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .settlements li {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      line-height: 1.4;
+    }
+
+    .settlements strong {
+      color: var(--primary-dark);
+    }
+
+    .settlement-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-line {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .visually-hidden-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .empty {
+      color: var(--muted);
+    }
+
+    .warning {
+      padding: 10px 12px;
+      border: 1px solid #fedf89;
+      border-radius: 8px;
+      background: #fffaeb;
+      color: #7a4b00;
+      line-height: 1.45;
+    }
+
+    .remove-person {
+      min-width: 38px;
+      padding: 8px;
+    }
+
+    .bulk-panel button {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.44);
+      z-index: 30;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(620px, 100%);
+      max-height: min(720px, calc(100vh - 36px));
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .modal-close {
+      min-width: 38px;
+      padding: 8px;
+    }
+
+    .modal-copy {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .modal-body {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .transfer-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .transfer-person {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .transfer-person span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .transfer-person strong {
+      overflow-wrap: anywhere;
+      font-size: 16px;
+    }
+
+    .transfer-amount {
+      display: grid;
+      gap: 5px;
+      justify-items: center;
+      color: var(--primary-dark);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .transfer-arrow {
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-empty {
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.45;
+      background: #fbfcfd;
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .delivery-card {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      min-height: 128px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .delivery-card:hover {
+      border-color: rgba(15, 118, 110, 0.35);
+      background: #eef7f6;
+    }
+
+    .delivery-card strong {
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .delivery-card span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 940px) {
+      main {
+        width: min(100% - 20px, 760px);
+        margin-top: 16px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .toolbar {
+        width: auto;
+        justify-content: start;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .summary {
+        position: static;
+        width: auto;
+        max-height: none;
+        overflow: visible;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        min-width: 0;
+      }
+
+      main {
+        width: calc(100% - 16px);
+        margin-top: 8px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .lead {
+        font-size: 15px;
+      }
+
+      .bulk-panel,
+      .bulk-group,
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .people-panel {
+        overflow: visible;
+      }
+
+      table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+      }
+
+      table {
+        min-width: 0;
+        background: transparent;
+      }
+
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+      }
+
+      tbody {
+        display: grid;
+        gap: 12px;
+        padding: 12px;
+        background: #f2f4f7;
+      }
+
+      tr {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      tr.collapsed {
+        gap: 0;
+      }
+
+      .person-toggle {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        min-height: 44px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+      }
+
+      .person-toggle:hover {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .person-toggle-number {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .person-toggle-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-weight: 800;
+      }
+
+      .person-toggle-summary {
+        display: none;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .person-toggle-icon {
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      tr.collapsed td:not(.person-toggle-cell) {
+        display: none;
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 0;
+        border-bottom: 0;
+        white-space: normal;
+      }
+
+      .person-toggle-cell {
+        display: block;
+      }
+
+      .person-toggle-cell::before {
+        content: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+        text-transform: uppercase;
+      }
+
+      .number-cell {
+        width: auto;
+        min-width: 0;
+        text-align: left;
+      }
+
+      .number-cell::before {
+        content: attr(data-label);
+      }
+
+      .check-cell {
+        text-align: left;
+      }
+
+      .spent-input,
+      .person-name {
+        min-width: 0;
+      }
+
+      .balance {
+        text-align: left;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .delivery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      button,
+      .button-like {
+        width: 100%;
+      }
+
+      .transfer-card {
+        grid-template-columns: 1fr;
+      }
+
+      .transfer-amount {
+        justify-items: start;
+      }
+
+      .modal-header,
+      .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body.fancy-design {
+      background:
+        radial-gradient(circle at 12% 0%, rgba(245, 158, 11, 0.20), transparent 30%),
+        radial-gradient(circle at 78% 8%, rgba(20, 184, 166, 0.18), transparent 32%),
+        linear-gradient(135deg, #101820 0%, #17212b 44%, #241c13 100%);
+      color: #eef2f6;
+    }
+
+    body.fancy-design main {
+      position: relative;
+      z-index: 1;
+      width: calc(100% - 28px);
+    }
+
+    body.fancy-design h1 {
+      max-width: 900px;
+      font-size: clamp(34px, 5vw, 68px);
+      line-height: 0.98;
+      color: #fff7ed;
+      text-transform: uppercase;
+    }
+
+    body.fancy-design .lead {
+      max-width: 860px;
+      color: #cbd5df;
+      font-size: 17px;
+    }
+
+    body.fancy-design .support-line {
+      color: #d6dde5;
+    }
+
+    body.fancy-design .panel,
+    body.fancy-design .modal,
+    body.fancy-design .delivery-card,
+    body.fancy-design .transfer-card,
+    body.fancy-design .metric,
+    body.fancy-design input,
+    body.fancy-design select {
+      background: rgba(255, 255, 255, 0.94);
+      color: #16202a;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    body.fancy-design .people-panel {
+      background: rgba(18, 27, 36, 0.78);
+      border-color: rgba(251, 191, 36, 0.30);
+    }
+
+    body.fancy-design table {
+      background: transparent;
+    }
+
+    body.fancy-design th {
+      background: rgba(255, 247, 237, 0.11);
+      color: #fde68a;
+      border-bottom-color: rgba(251, 191, 36, 0.28);
+    }
+
+    body.fancy-design td {
+      border-bottom-color: rgba(255, 255, 255, 0.10);
+      color: #eef2f6;
+    }
+
+    body.fancy-design tr:hover td {
+      background: rgba(255, 247, 237, 0.055);
+    }
+
+    body.fancy-design .number-cell,
+    body.fancy-design td::before {
+      color: #fcd34d;
+    }
+
+    body.fancy-design .balance {
+      color: #fff7ed;
+    }
+
+    body.fancy-design .balance.positive {
+      color: #86efac;
+    }
+
+    body.fancy-design .balance.negative {
+      color: #fca5a5;
+    }
+
+    body.fancy-design .people-panel input {
+      background: rgba(255, 255, 255, 0.10);
+      border-color: rgba(255, 255, 255, 0.20);
+      color: #fff7ed;
+    }
+
+    body.fancy-design .people-panel input:focus {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: #fbbf24;
+    }
+
+    body.fancy-design .people-panel input::placeholder {
+      color: rgba(238, 242, 246, 0.52);
+    }
+
+    body.fancy-design .people-panel input[type="checkbox"] {
+      accent-color: #f59e0b;
+    }
+
+    body.fancy-design .panel,
+    body.fancy-design .modal {
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+    }
+
+    body.fancy-design .summary {
+      background: rgba(18, 27, 36, 0.86);
+      border-color: rgba(251, 191, 36, 0.38);
+      color: #eef2f6;
+    }
+
+    body.fancy-design .summary-title,
+    body.fancy-design .metric strong {
+      color: #fff7ed;
+    }
+
+    body.fancy-design .bulk-panel,
+    body.fancy-design .modal-header {
+      background: #fff7ed;
+    }
+
+    body.fancy-design .bulk-panel {
+      background: rgba(255, 247, 237, 0.09);
+      border-bottom-color: rgba(251, 191, 36, 0.24);
+    }
+
+    body.fancy-design .bulk-label {
+      color: #fde68a;
+    }
+
+    body.fancy-design button,
+    body.fancy-design .button-like {
+      border-color: #f59e0b;
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    body.fancy-design button:hover,
+    body.fancy-design .button-like:hover {
+      border-color: #fbbf24;
+      background: #fbbf24;
+    }
+
+    body.fancy-design button.secondary,
+    body.fancy-design .button-like.secondary,
+    body.fancy-design .support-link {
+      border-color: rgba(251, 191, 36, 0.42);
+      background: rgba(255, 247, 237, 0.10);
+      color: #fde68a;
+    }
+
+    body.fancy-design button.danger {
+      border-color: rgba(248, 113, 113, 0.55);
+      background: rgba(127, 29, 29, 0.42);
+      color: #fecaca;
+    }
+
+    body.fancy-design .metric-grid {
+      border-color: rgba(245, 158, 11, 0.34);
+      background: rgba(245, 158, 11, 0.18);
+    }
+
+    body.fancy-design .metric {
+      background: rgba(255, 255, 255, 0.075);
+      color: #eef2f6;
+    }
+
+    body.fancy-design .metric span,
+    body.fancy-design .hint,
+    body.fancy-design label {
+      color: #d6dde5;
+    }
+
+    body.fancy-design .summary input,
+    body.fancy-design .summary select {
+      background: rgba(255, 255, 255, 0.10);
+      border-color: rgba(255, 255, 255, 0.20);
+      color: #fff7ed;
+    }
+
+    body.fancy-design .summary select option {
+      color: #111827;
+    }
+
+    body.fancy-design .modal {
+      background: rgba(18, 27, 36, 0.96);
+      color: #eef2f6;
+      border-color: rgba(251, 191, 36, 0.34);
+    }
+
+    body.fancy-design .modal-header {
+      background: rgba(255, 247, 237, 0.08);
+      border-bottom-color: rgba(251, 191, 36, 0.24);
+    }
+
+    body.fancy-design .modal-title,
+    body.fancy-design .transfer-person strong,
+    body.fancy-design .delivery-card strong {
+      color: #fff7ed;
+    }
+
+    body.fancy-design .transfer-card,
+    body.fancy-design .delivery-card,
+    body.fancy-design .modal-empty {
+      background: rgba(255, 255, 255, 0.075);
+      border-color: rgba(251, 191, 36, 0.22);
+      color: #eef2f6;
+    }
+
+    body.fancy-design .delivery-card:hover {
+      background: rgba(251, 191, 36, 0.12);
+    }
+
+    body.fancy-design .transfer-person span,
+    body.fancy-design .delivery-card span,
+    body.fancy-design .modal-empty {
+      color: #cbd5df;
+    }
+
+    body.fancy-design .language-switch {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      border-radius: 8px;
+      background: rgba(255, 247, 237, 0.12);
+    }
+
+    body.fancy-design .language-switch button {
+      min-height: 32px;
+      padding: 6px 10px;
+      border-color: transparent;
+      background: transparent;
+      color: #fff7ed;
+      font-size: 13px;
+    }
+
+    body.fancy-design .language-switch button.active {
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    @media (max-width: 760px) {
+      body.fancy-design main {
+        width: calc(100% - 14px);
+      }
+
+      body.fancy-design h1 {
+        font-size: 30px;
+      }
+
+      body.fancy-design tbody {
+        background: rgba(18, 27, 36, 0.62);
+      }
+
+      body.fancy-design tr {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(251, 191, 36, 0.24);
+      }
+
+      body.fancy-design tr:hover td {
+        background: transparent;
+      }
+
+      body.fancy-design .person-toggle {
+        border-color: transparent;
+        background: transparent;
+        color: #fff7ed;
+      }
+
+      body.fancy-design .person-toggle:hover {
+        border-color: transparent;
+        background: transparent;
+      }
+
+      body.fancy-design .person-toggle-number,
+      body.fancy-design .person-toggle-summary,
+      body.fancy-design .person-toggle-icon {
+        color: #fcd34d;
+      }
+    }
+
+    @media (max-width: 940px) {
+      body.fancy-design main {
+        width: calc(100% - 14px);
+      }
+    }
+  </style>
+</head>
+<body class="fancy-design">
+  <noscript>
+    <div class="compat-warning" style="display: block;">
+      В браузере отключен JavaScript. Включи JavaScript или открой файл в Chrome, Edge, Firefox или Safari.
+    </div>
+  </noscript>
+  <div id="compatWarning" class="compat-warning">
+    Этот файл нужно открыть в современном браузере: Chrome, Edge, Firefox или Safari. В старом браузере или встроенном просмотрщике таблица и расчеты не запустятся.
+  </div>
+  <script>
+    (function () {
+      try {
+        var supported = !!(window.Promise
+          && window.JSON
+          && Array.prototype.map
+          && String.prototype.replaceAll
+          && document.querySelector
+          && window.localStorage
+          && window.Blob
+          && window.URL
+          && window.FileReader);
+        new Function("const x = 1; let y = 2; const f = () => `${x + y}`; const z = { ...{ a: 1 } }; return f() + z.a;");
+        if (!supported) {
+          document.getElementById("compatWarning").style.display = "block";
+        }
+      } catch (error) {
+        document.getElementById("compatWarning").style.display = "block";
+      }
+    }());
+  </script>
+  <main>
+    <header>
+      <div>
+        <h1 data-i18n="appTitle">Калькулятор мероприятий</h1>
+        <p class="lead" data-i18n="lead">Калькулятор пивных мероприятий: кто пил, кто курил, кто за что башлял, и кому теперь переводить.</p>
+        <div class="support-line">
+          <span data-i18n="bugs">О всех багах писать:</span>
+          <a class="support-link" href="https://t.me/Xitass" target="_blank" rel="noopener noreferrer">Telegram @Xitass</a>
+        </div>
+        <div class="support-line">
+          <span data-i18n="languageLabel">Язык:</span>
+          <div class="language-switch" aria-label="Переключение языка">
+            <button id="langRu" class="active" type="button">Русский</button>
+            <button id="langStreet" type="button">Бытовой</button>
+            <button id="langGachi" type="button">Гачи</button>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar" aria-label="Действия">
+        <button id="addPerson" type="button" data-i18n="addPerson">Добавить человека</button>
+        <button id="showDelivery" class="secondary" type="button" data-i18n="delivery">Доставка</button>
+        <button id="saveJson" class="secondary" type="button" data-i18n="save">Сохранить</button>
+        <label for="jsonFile" id="loadJson" class="button-like secondary" data-i18n="load">Загрузить из файла</label>
+        <button id="reset" class="danger" type="button" data-i18n="reset">Сброс</button>
+        <input id="jsonFile" class="visually-hidden-input" type="file" accept="application/json,.json">
+        <div id="fileStatus" class="status-line" aria-live="polite"></div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel people-panel" aria-label="Участники и расходы">
+        <div class="bulk-panel" aria-label="Быстрые отметки">
+          <div class="bulk-group">
+            <span class="bulk-label" data-i18n="drank">Пил</span>
+            <button id="drinkAll" class="secondary" type="button" data-i18n="setAll">Поставить всем</button>
+            <button id="drinkNone" class="secondary" type="button" data-i18n="unsetAll">Снять у всех</button>
+          </div>
+          <div class="bulk-group">
+            <span class="bulk-label" data-i18n="smoked">Курил</span>
+            <button id="smokeAll" class="secondary" type="button" data-i18n="setAll">Поставить всем</button>
+            <button id="smokeNone" class="secondary" type="button" data-i18n="unsetAll">Снять у всех</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="number-cell">№</th>
+              <th data-i18n="firstName">Имя</th>
+              <th data-i18n="lastName">Фамилия</th>
+              <th class="money" data-i18n="common">Общие</th>
+              <th class="money" data-i18n="alcohol">Алкоголь</th>
+              <th class="money" data-i18n="tobacco">Табак</th>
+              <th data-i18n="drank">Пил</th>
+              <th data-i18n="smoked">Курил</th>
+              <th class="money" data-i18n="result">Итог</th>
+              <th aria-label="Удалить"></th>
+            </tr>
+          </thead>
+          <tbody id="people"></tbody>
+        </table>
+      </section>
+
+      <aside class="panel summary" aria-label="Итоги расчета">
+        <h2 class="summary-title" data-i18n="summary">Итоги</h2>
+
+        <label>
+          <span data-i18n="rent">Аренда квартиры (Амортизация)</span>
+          <input id="rent" type="number" min="0" step="100" inputmode="decimal">
+          <span class="hint" data-i18n="rentHint">Добавляется к общему итогу и делится между всеми участниками.</span>
+        </label>
+
+        <label>
+          <span data-i18n="rentOwner">Кому принадлежит место</span>
+          <select id="rentOwner"></select>
+          <span class="hint" data-i18n="rentOwnerHint">Выбранному человеку аренда засчитывается как оплаченная сумма.</span>
+        </label>
+
+        <div class="metric-grid" aria-label="Сводка">
+          <div class="metric">
+            <span data-i18n="totalSpent">Всего ушло</span>
+            <strong id="total">0 ₽</strong>
+          </div>
+          <div class="metric">
+            <span data-i18n="participants">Участников</span>
+            <strong id="count">0</strong>
+          </div>
+          <div class="metric">
+            <span data-i18n="habits">Пили / курили</span>
+            <strong id="habits">0 / 0</strong>
+          </div>
+          <div class="metric">
+            <span data-i18n="commonPerPerson">Общие всего / на человека</span>
+            <strong id="commonTotal">0 ₽ / 0 ₽</strong>
+          </div>
+          <div class="metric">
+            <span data-i18n="alcoholPerDrinker">Алкоголь всего / на пьющего</span>
+            <strong id="alcoholTotal">0 ₽</strong>
+          </div>
+          <div class="metric">
+            <span data-i18n="tobaccoPerSmoker">Табак всего / на курящего</span>
+            <strong id="tobaccoTotal">0 ₽</strong>
+          </div>
+        </div>
+
+        <div id="warning" class="warning" hidden></div>
+
+        <div>
+          <h2 class="summary-title" data-i18n="transfers">Кто кому переводит</h2>
+          <div class="settlement-actions">
+            <button id="showTransfers" type="button" data-i18n="showTransfers">Показать переводы</button>
+            <div id="settlementsPreview" class="hint"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="transfersModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="transfersTitle">
+    <section class="modal">
+      <div class="modal-header">
+        <h2 id="transfersTitle" class="modal-title">Кто кому переводит</h2>
+        <div class="modal-actions">
+          <button id="copyTransfers" class="secondary modal-copy" type="button">Скопировать в виде текста</button>
+          <button id="closeTransfers" class="danger modal-close" type="button" aria-label="Закрыть">×</button>
+        </div>
+      </div>
+      <div id="transfersBody" class="modal-body"></div>
+    </section>
+  </div>
+
+  <div id="deliveryModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deliveryTitle">
+    <section class="modal">
+      <div class="modal-header">
+        <h2 id="deliveryTitle" class="modal-title">Доставка в Ульяновске</h2>
+        <button id="closeDelivery" class="danger modal-close" type="button" aria-label="Закрыть">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-empty">Открывай сервис и проверяй доставку по конкретному адресу: зоны и магазины меняются.</div>
+        <div class="delivery-grid">
+          <a class="delivery-card" href="https://eda.yandex.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Яндекс Еда</strong>
+            <span>Рестораны и продукты. Один из главных агрегаторов.</span>
+          </a>
+          <a class="delivery-card" href="https://kuper.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Купер</strong>
+            <span>Продукты из сетей и магазинов, бывший СберМаркет.</span>
+          </a>
+          <a class="delivery-card" href="https://samokat.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Самокат</strong>
+            <span>Быстрая доставка продуктов. Проверить адрес в приложении/на сайте.</span>
+          </a>
+          <a class="delivery-card" href="https://dostavka.magnit.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Магнит</strong>
+            <span>Доставка продуктов и товаров из магазинов сети.</span>
+          </a>
+          <a class="delivery-card" href="https://5d.5ka.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Пятёрочка</strong>
+            <span>Доставка из Пятёрочки, доступность зависит от адреса.</span>
+          </a>
+          <a class="delivery-card" href="https://vkusvill.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>ВкусВилл</strong>
+            <span>Если есть зона доставки по адресу, удобно для еды и готовых товаров.</span>
+          </a>
+          <a class="delivery-card" href="https://chizhik.club/" target="_blank" rel="noopener noreferrer">
+            <strong>Чижик</strong>
+            <span>Доставка есть не во всех городах; Ульяновск надо проверять отдельно.</span>
+          </a>
+          <a class="delivery-card" href="https://market.yandex.ru/" target="_blank" rel="noopener noreferrer">
+            <strong>Яндекс Маркет</strong>
+            <span>Не только еда, но может выручить с бытовыми товарами для мероприятия.</span>
+          </a>
+          <a class="delivery-card" href="https://www.google.com/search?q=%D0%9A%D1%80%D0%B0%D1%84%D1%87%D0%B5%D0%BD%D0%BA%D0%BE+%D0%93%D1%80%D1%83%D0%BF%D0%BF+%D0%A3%D0%BB%D1%8C%D1%8F%D0%BD%D0%BE%D0%B2%D1%81%D0%BA+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0" target="_blank" rel="noopener noreferrer">
+            <strong>Крафченко Групп</strong>
+            <span>Локальные кафешки Ульяновска. Открывает поиск, чтобы выбрать актуальную точку.</span>
+          </a>
+          <a class="delivery-card" href="https://dodopizza.ru/ulyanovsk" target="_blank" rel="noopener noreferrer">
+            <strong>Додо Пицца</strong>
+            <span>Пицца и закуски, удобно для общего заказа на компанию.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const storageKey = "event-money-calculator:v2";
+    const expandedPeople = new Set();
+    let currentTransfers = [];
+    const defaults = {
+      rent: 0,
+      rentOwnerId: "",
+      people: [
+        { id: "dmitry-next", firstName: "Дмитрий", lastName: "Next", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "dmitry-twip", firstName: "Дмитрий", lastName: "Твип", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "andrey-mandormed", firstName: "Андрей", lastName: "Мандормед", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "gosha-ryga", firstName: "Гоша", lastName: "Рыга", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "nikita-pulya", firstName: "Никита", lastName: "Пуля", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "kostyanus-tun-tun-tun", firstName: "Костянус", lastName: "Тун-тун-тун", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "prosto-kirill", firstName: "Просто", lastName: "Кирилл", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "alexey", firstName: "Алексей", lastName: "Алексей", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "nikitex-123456", firstName: "Никитекс", lastName: "123456", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "sergey-gorodskoy", firstName: "Сергей", lastName: "Городской", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false },
+        { id: "grigory-winston", firstName: "Григорий", lastName: "Винстон", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false }
+      ]
+    };
+
+    let state = loadState();
+
+    const els = {
+      people: document.querySelector("#people"),
+      rent: document.querySelector("#rent"),
+      rentOwner: document.querySelector("#rentOwner"),
+      total: document.querySelector("#total"),
+      count: document.querySelector("#count"),
+      habits: document.querySelector("#habits"),
+      commonTotal: document.querySelector("#commonTotal"),
+      alcoholTotal: document.querySelector("#alcoholTotal"),
+      tobaccoTotal: document.querySelector("#tobaccoTotal"),
+      warning: document.querySelector("#warning"),
+      settlementsPreview: document.querySelector("#settlementsPreview"),
+      transfersModal: document.querySelector("#transfersModal"),
+      transfersBody: document.querySelector("#transfersBody"),
+      showTransfers: document.querySelector("#showTransfers"),
+      copyTransfers: document.querySelector("#copyTransfers"),
+      closeTransfers: document.querySelector("#closeTransfers"),
+      deliveryModal: document.querySelector("#deliveryModal"),
+      showDelivery: document.querySelector("#showDelivery"),
+      closeDelivery: document.querySelector("#closeDelivery"),
+      langRu: document.querySelector("#langRu"),
+      langStreet: document.querySelector("#langStreet"),
+      langGachi: document.querySelector("#langGachi"),
+      addPerson: document.querySelector("#addPerson"),
+      saveJson: document.querySelector("#saveJson"),
+      loadJson: document.querySelector("#loadJson"),
+      jsonFile: document.querySelector("#jsonFile"),
+      fileStatus: document.querySelector("#fileStatus"),
+      drinkAll: document.querySelector("#drinkAll"),
+      drinkNone: document.querySelector("#drinkNone"),
+      smokeAll: document.querySelector("#smokeAll"),
+      smokeNone: document.querySelector("#smokeNone"),
+      reset: document.querySelector("#reset")
+    };
+
+    const moneyFormat = new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "RUB",
+      maximumFractionDigits: 0
+    });
+
+    const dictionaries = {
+      ru: {
+        appTitle: "Калькулятор мероприятий",
+        lead: "Калькулятор пивных мероприятий: кто пил, кто курил, кто за что платил, и кому теперь переводить.",
+        bugs: "О всех багах писать:",
+        languageLabel: "Язык:",
+        addPerson: "Добавить человека",
+        delivery: "Доставка",
+        save: "Сохранить",
+        load: "Загрузить из файла",
+        reset: "Сброс",
+        drank: "Пил",
+        smoked: "Курил",
+        setAll: "Поставить всем",
+        unsetAll: "Снять у всех",
+        firstName: "Имя",
+        lastName: "Фамилия",
+        common: "Общие",
+        alcohol: "Алкоголь",
+        tobacco: "Табак",
+        result: "Итог",
+        summary: "Итоги",
+        rent: "Аренда квартиры (Амортизация)",
+        rentHint: "Добавляется к общему итогу и делится между всеми участниками.",
+        rentOwner: "Кому принадлежит место",
+        rentOwnerHint: "Выбранному человеку аренда засчитывается как оплаченная сумма.",
+        totalSpent: "Всего ушло",
+        participants: "Участников",
+        habits: "Пили / курили",
+        commonPerPerson: "Общие всего / на человека",
+        alcoholPerDrinker: "Алкоголь всего / на пьющего",
+        tobaccoPerSmoker: "Табак всего / на курящего",
+        transfers: "Кто кому переводит",
+        showTransfers: "Показать переводы",
+        delete: "Удалить"
+      },
+      street: {
+        appTitle: "Пивной разнос 2.1",
+        lead: "Вбивай народ, кто бухал, кто дымил, кто за что занес бабки, и кому теперь кидать перевод.",
+        bugs: "Если что-то сломалось — орать сюда:",
+        languageLabel: "Базар:",
+        addPerson: "Добавить типа",
+        delivery: "Жрачка",
+        save: "Сохранить движ",
+        load: "Залить файл",
+        reset: "Обнулить всё",
+        drank: "Бухал",
+        smoked: "Дымил",
+        setAll: "Навесить всем",
+        unsetAll: "Снять со всех",
+        firstName: "Погоняло",
+        lastName: "Фамилия",
+        common: "Общак",
+        alcohol: "Спирт",
+        tobacco: "Дым",
+        result: "Сальдо",
+        summary: "Расклад",
+        rent: "Хата (амортизация)",
+        rentHint: "Ложится в общак и раскидывается на всю тусу.",
+        rentOwner: "Чья хата",
+        rentOwnerHint: "Этому человеку хата засчитывается как оплаченный движ.",
+        totalSpent: "Всего улетело",
+        participants: "Народу",
+        habits: "Бухали / дымили",
+        commonPerPerson: "Общак всего / с рыла",
+        alcoholPerDrinker: "Спирт всего / с бухавшего",
+        tobaccoPerSmoker: "Дым всего / с дымившего",
+        transfers: "Кому кидать",
+        showTransfers: "Показать кому заносить",
+        delete: "Выпилить"
+      },
+      gachi: {
+        appTitle: "Dungeon калькулятор 2.1",
+        lead: "Заноси Leatherman-ов, кто был на флексе, кто сосал?, кто оплатил slaves и hundred bucks, и кому теперь выставлять счет.",
+        bugs: "Если сломалось — report to boss:",
+        languageLabel: "Mode:",
+        addPerson: "Добавить бойца",
+        delivery: "Protein delivery",
+        save: "Save session",
+        load: "Load dungeon",
+        reset: "Reset arena",
+        drank: "На флексе",
+        smoked: "Сосал?",
+        setAll: "Все сосали",
+        unsetAll: "Никто не сосал",
+        firstName: "Leatherman",
+        lastName: "Клан",
+        common: "Dungeon fund",
+        alcohol: "slaves",
+        tobacco: "hundred bucks",
+        result: "Balance, boss",
+        summary: "Boss summary",
+        rent: "Dungeon rent (wear damage)",
+        rentHint: "Делится на всю братву, владелец получает tribute.",
+        rentOwner: "Dungeon master",
+        rentOwnerHint: "Этому бойцу засчитывается аренда арены.",
+        totalSpent: "Total tribute",
+        participants: "Бойцов",
+        habits: "Флекс / сосал?",
+        commonPerPerson: "Dungeon fund / с бойца",
+        alcoholPerDrinker: "slaves / с флексера",
+        tobaccoPerSmoker: "hundred bucks / с ответившего да",
+        transfers: "Кто кому фистит",
+        showTransfers: "Открыть dungeon-разнос",
+        delete: "Kick"
+      }
+    };
+
+    let currentLanguage = localStorage.getItem("event-money-calculator-language") || "ru";
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        if (!saved || !Array.isArray(saved.people)) return clone(defaults);
+        if (isPristineSavedState(saved)) return clone(defaults);
+        return {
+          rent: toNumber(saved.rent, defaults.rent),
+          rentOwnerId: typeof saved.rentOwnerId === "string" ? saved.rentOwnerId : "",
+          people: saved.people.length ? saved.people.map((person) => normalizePerson(person, saved)) : clone(defaults.people)
+        };
+      } catch {
+        return clone(defaults);
+      }
+    }
+
+    function isPristineSavedState(saved) {
+      const hasOnlyEmptyPeople = saved.people.every((person) => {
+        return !person.firstName
+          && !person.lastName
+          && !person.id
+          && toNumber(person.spent, 0) === 0
+          && toNumber(person.alcoholSpent, 0) === 0
+          && toNumber(person.tobaccoSpent, 0) === 0
+          && !person.drank
+          && !person.smoked;
+      });
+
+      return hasOnlyEmptyPeople
+        && toNumber(saved.rent, 0) === 0
+        && toNumber(saved.alcohol, 0) === 0
+        && toNumber(saved.tobacco, 0) === 0;
+    }
+
+    function normalizePerson(person) {
+      const lastName = typeof person.lastName === "string" ? person.lastName : "";
+      return {
+        id: typeof person.id === "string" && person.id ? person.id : createPersonId(),
+        firstName: typeof person.firstName === "string" ? person.firstName : "",
+        lastName,
+        spent: toNumber(person.spent, 0),
+        alcoholSpent: toNumber(person.alcoholSpent, 0),
+        tobaccoSpent: toNumber(person.tobaccoSpent, 0),
+        drank: Boolean(person.drank),
+        smoked: Boolean(person.smoked)
+      };
+    }
+
+    function toNumber(value, fallback) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+    }
+
+    function formatMoney(value) {
+      return moneyFormat.format(Math.round(value));
+    }
+
+    function divideMoneyUp(amount, parts) {
+      return parts > 0 ? Math.ceil(amount / parts) : 0;
+    }
+
+    function personLabel(person, index) {
+      const fullName = `${person.firstName} ${person.lastName}`.trim();
+      return fullName || `Участник ${index + 1}`;
+    }
+
+    function updatePersonToggleName(row, index) {
+      const firstName = row.querySelector(".first-name").value.trim();
+      const lastName = row.querySelector(".last-name").value.trim();
+      row.querySelector(".person-toggle-name").textContent = personLabel({ firstName, lastName }, index);
+    }
+
+    function createPersonId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return `person-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function exportState() {
+      readStateFromDom();
+      saveState();
+
+      const payload = {
+        app: "event-money-calculator",
+        version: 1,
+        savedAt: new Date().toISOString(),
+        data: state
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `raschet-meropriyatiya-${date}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setFileStatus("Файл сохранен.");
+    }
+
+    async function importState(file) {
+      if (!file) return;
+
+      try {
+        const parsed = JSON.parse(await file.text());
+        const imported = parsed && parsed.data ? parsed.data : parsed;
+
+        if (!imported || !Array.isArray(imported.people)) {
+          throw new Error("Файл не похож на сохранение калькулятора.");
+        }
+
+        state = {
+          rent: toNumber(imported.rent, 0),
+          rentOwnerId: typeof imported.rentOwnerId === "string" ? imported.rentOwnerId : "",
+          people: imported.people.length ? imported.people.map(normalizePerson) : clone(defaults.people)
+        };
+        if (!state.people.some((person) => person.id === state.rentOwnerId)) {
+          state.rentOwnerId = "";
+        }
+        renderAll();
+        setFileStatus(`Загружено: ${file.name}`);
+      } catch (error) {
+        setFileStatus("Файл не загружен.");
+        alert(`Не получилось загрузить файл: ${error.message}`);
+      } finally {
+        els.jsonFile.value = "";
+      }
+    }
+
+    function setFileStatus(message) {
+      els.fileStatus.textContent = message;
+    }
+
+    function t(key) {
+      return (dictionaries[currentLanguage] && dictionaries[currentLanguage][key]) || dictionaries.ru[key] || key;
+    }
+
+    function setLanguage(language) {
+      currentLanguage = language;
+      localStorage.setItem("event-money-calculator-language", language);
+
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        node.textContent = t(node.dataset.i18n);
+      });
+
+      els.langRu.classList.toggle("active", language === "ru");
+      els.langStreet.classList.toggle("active", language === "street");
+      els.langGachi.classList.toggle("active", language === "gachi");
+      renderPeople();
+      renderRentOwnerOptions();
+      renderSummary(calculate());
+    }
+
+    function readStateFromDom() {
+      state.rent = toNumber(els.rent.value, 0);
+      state.rentOwnerId = els.rentOwner.value;
+      state.people = [...els.people.querySelectorAll("tr")].map((row) => ({
+        id: row.dataset.personId || createPersonId(),
+        firstName: row.querySelector(".first-name").value.trim(),
+        lastName: row.querySelector(".last-name").value.trim(),
+        spent: toNumber(row.querySelector(".spent").value, 0),
+        alcoholSpent: toNumber(row.querySelector(".alcohol-spent").value, 0),
+        tobaccoSpent: toNumber(row.querySelector(".tobacco-spent").value, 0),
+        drank: row.querySelector(".drank").checked,
+        smoked: row.querySelector(".smoked").checked
+      }));
+    }
+
+    function renderPeople() {
+      els.people.innerHTML = "";
+
+      state.people.forEach((person, index) => {
+        const row = document.createElement("tr");
+        row.dataset.personId = person.id;
+        row.classList.toggle("collapsed", !expandedPeople.has(person.id));
+        row.innerHTML = `
+          <td class="person-toggle-cell" colspan="10">
+            <button class="person-toggle" type="button" aria-expanded="${expandedPeople.has(person.id) ? "true" : "false"}">
+              <span class="person-toggle-number">${index + 1}</span>
+              <span class="person-toggle-name">${escapeHtml(personLabel(person, index))}</span>
+              <span class="person-toggle-summary" data-toggle-balance-for="${index}">0 ₽</span>
+              <span class="person-toggle-icon">${expandedPeople.has(person.id) ? "▲" : "▼"}</span>
+            </button>
+          </td>
+          <td class="number-cell" data-label="№">${index + 1}</td>
+          <td data-label="${escapeHtml(t("firstName"))}"><input class="person-name first-name" type="text" value="${escapeHtml(person.firstName)}" placeholder="${escapeHtml(t("firstName"))}"></td>
+          <td data-label="${escapeHtml(t("lastName"))}"><input class="person-name last-name" type="text" value="${escapeHtml(person.lastName)}" placeholder="${escapeHtml(t("lastName"))}"></td>
+          <td data-label="${escapeHtml(t("common"))}"><input class="spent-input spent" type="number" min="0" step="100" inputmode="decimal" value="${person.spent}"></td>
+          <td data-label="${escapeHtml(t("alcohol"))}"><input class="spent-input alcohol-spent" type="number" min="0" step="100" inputmode="decimal" value="${person.alcoholSpent}"></td>
+          <td data-label="${escapeHtml(t("tobacco"))}"><input class="spent-input tobacco-spent" type="number" min="0" step="100" inputmode="decimal" value="${person.tobaccoSpent}"></td>
+          <td class="check-cell" data-label="${escapeHtml(t("drank"))}"><input class="drank" type="checkbox" ${person.drank ? "checked" : ""} aria-label="${escapeHtml(t("drank"))}"></td>
+          <td class="check-cell" data-label="${escapeHtml(t("smoked"))}"><input class="smoked" type="checkbox" ${person.smoked ? "checked" : ""} aria-label="${escapeHtml(t("smoked"))}"></td>
+          <td class="balance" data-label="${escapeHtml(t("result"))}" data-balance-for="${index}">0 ₽</td>
+          <td data-label="${escapeHtml(t("delete"))}"><button class="danger remove-person" type="button" aria-label="${escapeHtml(t("delete"))}">×</button></td>
+        `;
+
+        row.querySelectorAll("input").forEach((input) => {
+          input.addEventListener("input", calculateAndRender);
+          input.addEventListener("change", calculateAndRender);
+        });
+
+        row.querySelectorAll(".first-name, .last-name").forEach((input) => {
+          input.addEventListener("input", () => updatePersonToggleName(row, index));
+          input.addEventListener("change", () => updatePersonToggleName(row, index));
+        });
+
+        row.querySelector(".person-toggle").addEventListener("click", () => {
+          if (expandedPeople.has(person.id)) {
+            expandedPeople.delete(person.id);
+          } else {
+            expandedPeople.add(person.id);
+          }
+          row.classList.toggle("collapsed", !expandedPeople.has(person.id));
+          const button = row.querySelector(".person-toggle");
+          const icon = row.querySelector(".person-toggle-icon");
+          button.setAttribute("aria-expanded", expandedPeople.has(person.id) ? "true" : "false");
+          icon.textContent = expandedPeople.has(person.id) ? "▲" : "▼";
+        });
+
+        row.querySelector(".remove-person").addEventListener("click", () => {
+          readStateFromDom();
+          expandedPeople.delete(person.id);
+          state.people.splice(index, 1);
+          if (!state.people.length) {
+            state.people.push({ id: createPersonId(), firstName: "", lastName: "", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false });
+          }
+          if (!state.people.some((person) => person.id === state.rentOwnerId)) {
+            state.rentOwnerId = "";
+          }
+          renderAll();
+        });
+
+        els.people.appendChild(row);
+      });
+    }
+
+    function renderRentOwnerOptions() {
+      const currentOwnerId = state.rentOwnerId;
+      const options = [
+        `<option value="">Не выбран</option>`,
+        ...state.people.map((person, index) => {
+          const selected = person.id === currentOwnerId ? "selected" : "";
+          return `<option value="${escapeHtml(person.id)}" ${selected}>${escapeHtml(personLabel(person, index))}</option>`;
+        })
+      ];
+
+      els.rentOwner.innerHTML = options.join("");
+      if (!state.people.some((person) => person.id === currentOwnerId)) {
+        state.rentOwnerId = "";
+        els.rentOwner.value = "";
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function calculate() {
+      const peopleCount = state.people.length;
+      const spentTotal = state.people.reduce((sum, person) => sum + person.spent, 0);
+      const alcoholTotal = state.people.reduce((sum, person) => sum + person.alcoholSpent, 0);
+      const tobaccoTotal = state.people.reduce((sum, person) => sum + person.tobaccoSpent, 0);
+      const drankCount = state.people.filter((person) => person.drank).length;
+      const smokedCount = state.people.filter((person) => person.smoked).length;
+      const commonTotal = spentTotal + state.rent + (drankCount ? 0 : alcoholTotal) + (smokedCount ? 0 : tobaccoTotal);
+      const total = spentTotal + state.rent + alcoholTotal + tobaccoTotal;
+      const commonShare = divideMoneyUp(commonTotal, peopleCount);
+      const alcoholShare = divideMoneyUp(alcoholTotal, drankCount);
+      const tobaccoShare = divideMoneyUp(tobaccoTotal, smokedCount);
+      const balances = state.people.map((person, index) => ({
+        index,
+        name: personLabel(person, index),
+        balance: person.spent + person.alcoholSpent + person.tobaccoSpent + (person.id === state.rentOwnerId ? state.rent : 0) - commonShare - (person.drank ? alcoholShare : 0) - (person.smoked ? tobaccoShare : 0)
+      }));
+
+      return {
+        peopleCount,
+        spentTotal,
+        alcoholTotal,
+        tobaccoTotal,
+        commonTotal,
+        total,
+        commonShare,
+        alcoholShare,
+        tobaccoShare,
+        balances,
+        drankCount,
+        smokedCount
+      };
+    }
+
+    function buildSettlements(balances) {
+      const debtors = balances
+        .filter((item) => item.balance < -0.5)
+        .map((item) => ({ ...item, amount: Math.abs(item.balance) }))
+        .sort((a, b) => b.amount - a.amount);
+      const creditors = balances
+        .filter((item) => item.balance > 0.5)
+        .map((item) => ({ ...item, amount: item.balance }))
+        .sort((a, b) => b.amount - a.amount);
+
+      const transfers = [];
+      let debtorIndex = 0;
+      let creditorIndex = 0;
+
+      while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+        const debtor = debtors[debtorIndex];
+        const creditor = creditors[creditorIndex];
+        const amount = Math.min(debtor.amount, creditor.amount);
+
+        if (amount > 0.5) {
+          transfers.push({ from: debtor.name, to: creditor.name, amount });
+        }
+
+        debtor.amount -= amount;
+        creditor.amount -= amount;
+
+        if (debtor.amount <= 0.5) debtorIndex += 1;
+        if (creditor.amount <= 0.5) creditorIndex += 1;
+      }
+
+      return transfers;
+    }
+
+    function renderSummary(result) {
+      els.total.textContent = formatMoney(result.total);
+      els.count.textContent = String(result.peopleCount);
+      els.habits.textContent = `${result.drankCount} / ${result.smokedCount}`;
+      els.commonTotal.textContent = `${formatMoney(result.commonTotal)} / ${formatMoney(result.commonShare)}`;
+      els.alcoholTotal.textContent = `${formatMoney(result.alcoholTotal)} / ${formatMoney(result.alcoholShare)}`;
+      els.tobaccoTotal.textContent = `${formatMoney(result.tobaccoTotal)} / ${formatMoney(result.tobaccoShare)}`;
+
+      const warnings = [];
+      if (state.rent > 0 && !state.rentOwnerId) {
+        warnings.push("Аренда квартиры указана, но владелец места не выбран. Пока эта сумма делится между всеми, но никому не зачисляется как полученная.");
+      }
+      if (result.alcoholTotal > 0 && !result.drankCount) {
+        warnings.push("Алкоголь указан, но никто не отмечен как «Пил», поэтому эта сумма пока делится между всеми как общий расход.");
+      }
+      if (result.tobaccoTotal > 0 && !result.smokedCount) {
+        warnings.push("Табак указан, но никто не отмечен как «Курил», поэтому эта сумма пока делится между всеми как общий расход.");
+      }
+      els.warning.hidden = warnings.length === 0;
+      els.warning.innerHTML = warnings.map(escapeHtml).join("<br>");
+
+      result.balances.forEach((item) => {
+        const cell = els.people.querySelector(`[data-balance-for="${item.index}"]`);
+        const toggleBalance = els.people.querySelector(`[data-toggle-balance-for="${item.index}"]`);
+        const formattedBalance = formatMoney(item.balance);
+        if (cell) {
+          cell.textContent = formattedBalance;
+          cell.classList.toggle("positive", item.balance > 0.5);
+          cell.classList.toggle("negative", item.balance < -0.5);
+        }
+        if (toggleBalance) {
+          toggleBalance.textContent = formattedBalance;
+        }
+      });
+
+      renderTransfers(buildSettlements(result.balances));
+    }
+
+    function renderTransfers(transfers) {
+      currentTransfers = transfers;
+
+      if (!transfers.length) {
+        els.settlementsPreview.textContent = "Пока никто никому не должен.";
+        els.transfersBody.innerHTML = `<div class="modal-empty">Пока никто никому не должен.</div>`;
+        return;
+      }
+
+      els.settlementsPreview.textContent = `${transfers.length} ${pluralize(transfers.length, "перевод", "перевода", "переводов")}`;
+      els.transfersBody.innerHTML = transfers.map((transfer) => `
+        <article class="transfer-card">
+          <div class="transfer-person">
+            <span>От кого</span>
+            <strong>${escapeHtml(transfer.from)}</strong>
+          </div>
+          <div class="transfer-amount">
+            <div class="transfer-arrow">→</div>
+            <div>${formatMoney(transfer.amount)}</div>
+          </div>
+          <div class="transfer-person">
+            <span>Кому</span>
+            <strong>${escapeHtml(transfer.to)}</strong>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function buildTransfersText() {
+      if (!currentTransfers.length) {
+        return "По расчету мероприятия пока никто никому не должен.";
+      }
+
+      const lines = currentTransfers.map((transfer) => {
+        return `${transfer.from} → ${transfer.to}: ${formatMoney(transfer.amount)}`;
+      });
+      return ["Переводы по расчету мероприятия:", ...lines].join("\n");
+    }
+
+    async function copyTransfersText() {
+      const text = buildTransfersText();
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          copyTextFallback(text);
+        }
+        setFileStatus("Переводы скопированы.");
+      } catch (error) {
+        copyTextFallback(text);
+        setFileStatus("Переводы скопированы.");
+      }
+    }
+
+    function copyTextFallback(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    function pluralize(count, one, few, many) {
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+      return many;
+    }
+
+    function openTransfersModal() {
+      readStateFromDom();
+      renderSummary(calculate());
+      els.transfersModal.classList.add("open");
+    }
+
+    function closeTransfersModal() {
+      els.transfersModal.classList.remove("open");
+    }
+
+    function openDeliveryModal() {
+      els.deliveryModal.classList.add("open");
+    }
+
+    function closeDeliveryModal() {
+      els.deliveryModal.classList.remove("open");
+    }
+
+    function calculateAndRender() {
+      readStateFromDom();
+      renderRentOwnerOptions();
+      saveState();
+      renderSummary(calculate());
+    }
+
+    function renderAll() {
+      els.rent.value = state.rent;
+      renderPeople();
+      renderRentOwnerOptions();
+      saveState();
+      renderSummary(calculate());
+    }
+
+    els.rent.addEventListener("input", calculateAndRender);
+    els.rentOwner.addEventListener("change", calculateAndRender);
+    els.addPerson.addEventListener("click", () => {
+      readStateFromDom();
+      state.people.push({ id: createPersonId(), firstName: "", lastName: "", spent: 0, alcoholSpent: 0, tobaccoSpent: 0, drank: false, smoked: false });
+      renderAll();
+    });
+    els.saveJson.addEventListener("click", exportState);
+    els.jsonFile.addEventListener("change", () => {
+      importState(els.jsonFile.files[0]);
+    });
+    els.langRu.addEventListener("click", () => {
+      setLanguage("ru");
+    });
+    els.langStreet.addEventListener("click", () => {
+      setLanguage("street");
+    });
+    els.langGachi.addEventListener("click", () => {
+      setLanguage("gachi");
+    });
+    els.showTransfers.addEventListener("click", openTransfersModal);
+    els.copyTransfers.addEventListener("click", copyTransfersText);
+    els.closeTransfers.addEventListener("click", closeTransfersModal);
+    els.transfersModal.addEventListener("click", (event) => {
+      if (event.target === els.transfersModal) {
+        closeTransfersModal();
+      }
+    });
+    els.showDelivery.addEventListener("click", openDeliveryModal);
+    els.closeDelivery.addEventListener("click", closeDeliveryModal);
+    els.deliveryModal.addEventListener("click", (event) => {
+      if (event.target === els.deliveryModal) {
+        closeDeliveryModal();
+      }
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeTransfersModal();
+        closeDeliveryModal();
+      }
+    });
+    els.drinkAll.addEventListener("click", () => {
+      setEveryone("drank", true);
+    });
+    els.drinkNone.addEventListener("click", () => {
+      setEveryone("drank", false);
+    });
+    els.smokeAll.addEventListener("click", () => {
+      setEveryone("smoked", true);
+    });
+    els.smokeNone.addEventListener("click", () => {
+      setEveryone("smoked", false);
+    });
+    els.reset.addEventListener("click", () => {
+      localStorage.removeItem(storageKey);
+      state = clone(defaults);
+      renderAll();
+    });
+
+    function setEveryone(field, value) {
+      readStateFromDom();
+      state.people = state.people.map((person) => ({ ...person, [field]: value }));
+      renderAll();
+    }
+
+    renderAll();
+    setLanguage(currentLanguage);
+  </script>
+</body>
+</html>
